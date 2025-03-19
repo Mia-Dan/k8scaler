@@ -1,8 +1,8 @@
 import tool.tools as tools
 import time
 
-node_name = ["node1", "node2"]
-node_ip = ["192.168.144.101", "192.168.144.102"]
+node_name = ["master", "worker-01"]
+node_ip = ["10.10.49.30", "10.10.49.31"]
 namespace = "sock-shop"
 scaling_pod_name = "front-end"
 # mode = "statuscale"
