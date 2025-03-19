@@ -428,7 +428,7 @@ def hyscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate, 
     for i in range(0, len(replicas_id)):
         # Construct and print the SSH command to adjust CPU resources
         print("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
-            min(max(int(row[0]) * 100, 1000), 1000), 30000)) + " " + str(
+            min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
         # Execute the SSH command to adjust CPU resources on the remote node
         os.system("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
