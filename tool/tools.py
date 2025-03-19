@@ -8,6 +8,10 @@ import pandas as pd
 
 
 def collect_metrics(namespace):
+    # Create history directory if it doesn't exist
+    if not os.path.exists("./history/"):
+        os.makedirs("./history/")
+        
     pod_name = []
     try:
         result = subprocess.check_output("kubectl top pod -n " + namespace, shell=True, text=True)
@@ -80,6 +84,10 @@ def maxfilesize(replicas_name, base_path):
 
 def scaling(pod_locate, pod_name, scaling_pod_name, mode, namespace, cooling_time, upper_sum_threshold,
             lower_sum_threshold, upper_sole_threshold, lower_sole_threshold, hori_ver_time, safe_time, parameter):
+    # Create scale directory if it doesn't exist
+    if not os.path.exists("./scale/"):
+        os.makedirs("./scale/")
+        
     replicas_name = []
     replicas_locate = []
     replicas_id = []
@@ -159,6 +167,10 @@ def scaling(pod_locate, pod_name, scaling_pod_name, mode, namespace, cooling_tim
 
 
 def gbm_train(params):
+    # Create train_data directory if it doesn't exist
+    if not os.path.exists("./train_data/"):
+        os.makedirs("./train_data/")
+        
     new_df = pd.read_csv('./train_data/train.csv')
     datas = new_df.dropna(axis=0, how='any')
     X = datas.iloc[:, 0:5]
@@ -217,10 +229,10 @@ def statuscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locat
                 scale_info_last = list(reader)[-1]
             row2 = [max(float(scale_info_last[0]), cpu_usage[-1] * 1.15) * 0.9, row[1]]
             for i in range(0, len(replicas_id)):
-                print("horizontal vertical: ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                print("horizontal vertical: ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row2[0]) * 100, 1000), 30000))
                       + " " + str(replicas_id[i]) + "'")
-                os.system("ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                os.system("ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row2[0]) * 100, 1000), 30000))
                           + " " + str(replicas_id[i]) + "'")
             with open(scale_file, "a", newline='') as out:
@@ -236,9 +248,9 @@ def statuscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locat
                 scale_info_last = list(reader)[-1]
             row2 = [float(scale_info_last[0]) * 1.1, row[1]]
             for i in range(0, len(replicas_id)):
-                print("horizontal vertical: ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                print("horizontal vertical: ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row2[0]) * 100, 1000), 30000)) + " " + str(replicas_id[i]) + "'")
-                os.system("ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                os.system("ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row2[0]) * 100, 1000), 30000)) + " " + str(replicas_id[i]) + "'")
             with open(scale_file, "a", newline='') as out:
                 csv_writer = csv.writer(out, dialect="excel")
@@ -275,10 +287,10 @@ def statuscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locat
             y_pred = gbm.predict(df)[0] * 3 / 0.8
 
             for i in range(0, len(replicas_id)):
-                print("predict ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                print("predict ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(y_pred) * 100, 1000), 30000)) + " " + str(
                     replicas_id[i]) + "'")
-                os.system("ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                os.system("ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(y_pred) * 100, 1000), 30000)) + " " + str(
                     replicas_id[i]) + "'")
             row = [y_pred, scale_info_last[1], timestamp[-1], scale_info_last[3], "predict",
@@ -301,9 +313,9 @@ def statuscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locat
                        '', '', scale_info_last[8]]
 
             for i in range(0, len(replicas_id)):
-                print("threshold or pid: ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                print("threshold or pid: ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(replicas_id[i]) + "'")
-                os.system("ssh root@" + str(replicas_locate[i]) + " 'python scale.py " + str(
+                os.system("ssh root@" + str(replicas_locate[i]) + " '/usr/bin/python3 scale.py " + str(
                     min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(replicas_id[i]) + "'")
             with open(scale_file, "a", newline='') as out:
                 csv_writer = csv.writer(out, dialect="excel")
@@ -365,10 +377,10 @@ def showar(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate, r
                     row = [y_pred, scale_info[1], timestamp[-1], "", "vertical"]
 
     for i in range(0, len(replicas_id)):
-        print("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        print("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
-        os.system("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        os.system("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
     with open(scale_file, "a", newline='') as out:
@@ -427,11 +439,11 @@ def hyscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate, 
     # Apply vertical scaling to all replicas regardless of which branch was taken
     for i in range(0, len(replicas_id)):
         # Construct and print the SSH command to adjust CPU resources
-        print("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        print("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
         # Execute the SSH command to adjust CPU resources on the remote node
-        os.system("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        os.system("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
     
@@ -473,10 +485,10 @@ def gbmscaler(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate
                     row = [y_pred, scale_info[1], timestamp[-1], "", "vertical"]
 
     for i in range(0, len(replicas_id)):
-        print("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        print("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
-        os.system("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
+        os.system("ssh root@" + replicas_locate[i] + " '/usr/bin/python3 scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
     with open(scale_file, "a", newline='') as out:
