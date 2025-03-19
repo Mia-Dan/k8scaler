@@ -5,7 +5,8 @@ node_name = ["node1", "node2"]
 node_ip = ["192.168.144.101", "192.168.144.102"]
 namespace = "sock-shop"
 scaling_pod_name = "front-end"
-mode = "statuscale"
+# mode = "statuscale"
+mode = "hyscale"
 
 parameter = tools.IncrementalPID({}, 0).to_dict()
 upper_sum_threshold = 38

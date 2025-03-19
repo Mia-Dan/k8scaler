@@ -379,39 +379,63 @@ def showar(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate, r
 
 def hyscale(cpu_usage, memory_usage, timestamp, replicas_name, replicas_locate, replicas_id, scale_info, scale_file,
             cooling_time, namespace):
+    # Case 1: First data point - initialize with vertical scaling
     if len(cpu_usage) == 1:
+        # Set initial resource allocation at 122% of current CPU usage (1/0.82 ≈ 1.22)
         row = [cpu_usage[-1] / 0.82, timestamp[-1], timestamp[-1], "", "vertical"]
     else:
+        # Case 2: Not enough data points for trend analysis (need at least 5)
         if len(cpu_usage) <= 5:
+            # Continue with vertical scaling but maintain cooling time from previous scaling
             row = [cpu_usage[-1] / 0.82, scale_info[1], timestamp[-1], "", "vertical"]
         else:
+            # Case 3: Scale down (horizontal) - reduce number of replicas
+            # Conditions: 
+            # - More than 1 replica exists
+            # - Average CPU usage is low enough to run with fewer replicas
+            # - Cooling time has passed since last scaling operation
             if len(replicas_name) > 1 and sum(cpu_usage[-5:]) / 4 <= (len(replicas_name) - 1) * 30 / (  # 300
                     len(replicas_name)) and float(scale_info[1]) + int(cooling_time) < float(timestamp[-1]):
+                # Calculate new resource allocation based on average of last 5 measurements
                 row = [sum(cpu_usage[-5:]) / 5/0.82, timestamp[-1], timestamp[-1], max(len(replicas_name) - 1, 1),
                        "horizontal"]
+                # Execute horizontal scaling down command (reduce replicas)
                 print("kubectl scale deployment " + replicas_name[0][:-17] + " --replicas=" + str(
                     row[3]) + "  -n " + namespace)
                 os.system("kubectl scale deployment " + replicas_name[0][:-17] + " --replicas=" + str(
                     row[3]) + "  -n " + namespace)
             else:
+                # Case 4: Scale up (horizontal) - increase number of replicas
+                # Conditions:
+                # - Average CPU usage is very high (above 300%)
+                # - Cooling time has passed since last scaling operation
                 if sum(cpu_usage[-5:]) / 4 >= 300 and float(scale_info[1]) + int(
                         cooling_time) < float(timestamp[-1]):
+                    # Calculate new resource allocation based on average of last 5 measurements
                     row = [sum(cpu_usage[-5:]) /5/ 0.82, timestamp[-1], timestamp[-1], max(len(replicas_name) + 1, 1),
                            "horizontal"]
+                    # Execute horizontal scaling up command (add replicas)
                     print("kubectl scale deployment " + replicas_name[0][:-17] + " --replicas=" + str(
                         row[3]) + "  -n " + namespace)
                     os.system("kubectl scale deployment " + replicas_name[0][:-17] + " --replicas=" + str(
                         row[3]) + "  -n " + namespace)
                 else:
+                    # Case 5: Default - vertical scaling only
+                    # When conditions for horizontal scaling aren't met
                     row = [sum(cpu_usage[-5:]) /5/ 0.82, scale_info[1], timestamp[-1], "", "vertical"]
 
+    # Apply vertical scaling to all replicas regardless of which branch was taken
     for i in range(0, len(replicas_id)):
+        # Construct and print the SSH command to adjust CPU resources
         print("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
-            min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
+            min(max(int(row[0]) * 100, 1000), 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
+        # Execute the SSH command to adjust CPU resources on the remote node
         os.system("ssh root@" + replicas_locate[i] + " 'python scale.py " + str(
             min(max(int(row[0]) * 100, 1000), 30000)) + " " + str(
             replicas_id[i]) + "'")
+    
+    # Record the scaling decision in the CSV file for tracking
     with open(scale_file, "a", newline='') as out:
         csv_writer = csv.writer(out, dialect="excel")
         csv_writer.writerow(row)
